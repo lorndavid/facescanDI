@@ -35,7 +35,6 @@
     #student-list li.completed { color:#4ade80!important; font-weight:600; opacity:.7; pointer-events:none; }
     .filter-select{
       background-color:#E5E7EB; color:#111827; padding:.5rem 2rem .5rem .75rem; font-size:.875rem; border-radius:.5rem; border:1px solid #9CA3AF; -webkit-appearance:none; appearance:none;
-      /* fixed SVG data URL */
       background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
       background-position:right .5rem center; background-repeat:no-repeat; background-size:1.5em 1.5em;
     }
@@ -45,11 +44,11 @@
     ::-webkit-scrollbar-track{ background:#1e293b; }
     ::-webkit-scrollbar-thumb{ background:#475569; border-radius:4px; }
 
-    /* Login */
+    /* Login card */
     #login-screen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem; }
     .login-card{ width:100%; max-width:400px; background:rgba(30,41,59,.7); border:1px solid rgba(255,255,255,.1); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-radius:1.5rem; padding:2rem; box-shadow:0 20px 50px rgba(0,0,0,.3); }
     #admin-select{ background-color:#334155; color:#e2e8f0; border:1px solid #475569; }
-    /* removed invalid: img { crossorigin: anonymous; } */
+    /* note: removed invalid CSS 'img { crossorigin: anonymous; }' */
   </style>
 </head>
 
@@ -104,26 +103,10 @@
         </div>
 
         <ul class="flex-1 flex flex-col space-y-2 px-4 overflow-y-auto">
-          <li>
-            <a href="#" id="nav-scan" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-indigo-500 hover:text-white">
-              <i class="fas fa-camera-retro fa-fw"></i><span class="font-semibold">ថតរូប</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" id="nav-list" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-indigo-500 hover:text-white">
-              <i class="fas fa-users fa-fw"></i><span class="font-semibold">ទិន្នន័យរូបភាពនិស្សិត</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" id="nav-records" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-indigo-500 hover:text-white">
-              <i class="fas fa-database fa-fw"></i><span class="font-semibold">រូបភាពបានរក្សាទុក</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" id="nav-storage" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-indigo-500 hover:text-white">
-              <i class="fas fa-link fa-fw"></i><span class="font-semibold">Storage Links</span>
-            </a>
-          </li>
+          <li><a href="#" id="nav-scan" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-indigo-500 hover:text-white"><i class="fas fa-camera-retro fa-fw"></i><span class="font-semibold">ថតរូប</span></a></li>
+          <li><a href="#" id="nav-list" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-indigo-500 hover:text-white"><i class="fas fa-users fa-fw"></i><span class="font-semibold">ទិន្នន័យរូបភាពនិស្សិត</span></a></li>
+          <li><a href="#" id="nav-records" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-indigo-500 hover:text-white"><i class="fas fa-database fa-fw"></i><span class="font-semibold">រូបភាពបានរក្សាទុក</span></a></li>
+          <li><a href="#" id="nav-storage" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-indigo-500 hover:text-white"><i class="fas fa-link fa-fw"></i><span class="font-semibold">Storage Links</span></a></li>
         </ul>
 
         <div id="admin-profile-sidebar" class="hidden p-4 border-t border-slate-700/50">
@@ -205,9 +188,7 @@
             <div id="list-container" class="table-container flex-1 overflow-x-auto">
               <div id="list-loading" class="text-center py-10"><p class="text-slate-400">កំពុងទាញទិន្នន័យរូបភាពនិស្សិត...</p></div>
               <table id="list-table" class="hidden w-full text-left text-slate-300">
-                <thead class="bg-slate-700/50 sticky top-0">
-                  <tr><th class="p-3">ID</th><th class="p-3">ឈ្មោះ</th><th class="p-3">រូបភាព</th><th class="p-3 text-center">Status</th></tr>
-                </thead>
+                <thead class="bg-slate-700/50 sticky top-0"><tr><th class="p-3">ID</th><th class="p-3">ឈ្មោះ</th><th class="p-3">រូបភាព</th><th class="p-3 text-center">Status</th></tr></thead>
                 <tbody></tbody>
               </table>
             </div>
@@ -225,9 +206,7 @@
             <div id="records-container" class="table-container flex-1 overflow-x-auto">
               <div id="records-loading" class="text-center py-10"><p class="text-slate-400">កំពុងទាញរូបភាពបានរក្សាទុក...</p></div>
               <table id="records-table" class="hidden w-full text-left text-slate-300">
-                <thead class="bg-slate-700/50 sticky top-0">
-                  <tr><th class="p-3">ល.រ</th><th class="p-3">ឈ្មោះ</th><th class="p-3">ID</th><th class="p-3">ថ្នាក់</th><th class="p-3">ក្រុម</th><th class="p-3">រូបភាព</th><th class="p-3 text-center">កែ</th></tr>
-                </thead>
+                <thead class="bg-slate-700/50 sticky top-0"><tr><th class="p-3">ល.រ</th><th class="p-3">ឈ្មោះ</th><th class="p-3">ID</th><th class="p-3">ថ្នាក់</th><th class="p-3">ក្រុម</th><th class="p-3">រូបភាព</th><th class="p-3 text-center">កែ</th></tr></thead>
                 <tbody></tbody>
               </table>
             </div>
@@ -254,7 +233,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2urFAWpI50njcJK1YpjI-GozAw8s5hX_fYku6rDG5aHmPUsLU9b6mba0l65U-5bPw/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPBipQMaJ9d8UQg2BdVXPw6ycZHb4hxcNfiJEW4LFZvceXo62UjkDCZEP7JwqJw_4u/exec';
 
     // === DOM refs ===
     const video = document.getElementById('video'), captureCanvas = document.getElementById('capture-canvas'),
@@ -296,7 +275,7 @@
       adminProfileImgHeader = document.getElementById('admin-profile-img-header'), adminProfileSidebar = document.getElementById('admin-profile-sidebar'),
       adminProfileImgSidebar = document.getElementById('admin-profile-img-sidebar'), adminNameSidebar = document.getElementById('admin-name-sidebar');
 
-    // === State & icons ===
+    // === Icons & state ===
     const icons = {
       success:`<svg class="w-full h-full text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
       error:`<svg class="w-full h-full text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
@@ -309,6 +288,16 @@
         currentStream, faceApiInterval, stableFrames=0, currentFacingMode='user',
         selectedStudent=null, currentCameraMode='auto',
         loggedInAdmin=null, adminFaceMatcher=null, adminScanInterval=null, isScanning=false;
+
+    // === Session helpers (auto-skip login) ===
+    const SESSION_KEY = 'di_admin_session_v1';
+    function saveAdminSession({ name, imageUrl }) {
+      try { localStorage.setItem(SESSION_KEY, JSON.stringify({ name, imageUrl, ts: Date.now() })); } catch (_) {}
+    }
+    function loadAdminSession() {
+      try { const r = localStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; } catch (_) { return null; }
+    }
+    function clearAdminSession() { try { localStorage.removeItem(SESSION_KEY); } catch (_) {} }
 
     // === Modal ===
     function showModal(type, message, actions={}) {
@@ -334,7 +323,7 @@
       }
     }
 
-    // === Models ===
+    // === Face API models ===
     async function loadModels(){
       const MODEL_URL='./models';
       await Promise.all([
@@ -347,27 +336,19 @@
 
     // === Admin Login ===
     async function fetchAdmins(){
-      try{
-        const res = await fetch(`${SCRIPT_URL}?action=getAdmins`);
-        if(!res.ok) throw new Error(`Server error: ${res.status}`);
-        const data = await res.json();
-
-        // support both backend formats:
-        if (Array.isArray(data?.data)) {
-          adminData = data.data.map(o => [o.name, o.imageUrl]);
-        } else if (Array.isArray(data)) {
-          adminData = data.filter(r => r[0] && r[1]);
-        } else {
-          throw new Error('Unexpected admin payload.');
-        }
-
-        if (!adminData.length) throw new Error('No admin data found.');
-        populateAdminSelect();
-      }catch(e){
-        document.getElementById('login-title').textContent="Login Error";
-        document.getElementById('login-subtitle').textContent=`Could not load admins: ${e.message}`;
-        adminListLoader.classList.add('hidden');
+      const res = await fetch(`${SCRIPT_URL}?action=getAdmins`);
+      if(!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      // support both backend formats:
+      if (Array.isArray(data?.data)) {
+        adminData = data.data.map(o => [o.name, o.imageUrl]);
+      } else if (Array.isArray(data)) {
+        adminData = data.filter(r => r[0] && r[1]);
+      } else {
+        throw new Error('Unexpected admin payload.');
       }
+      if (!adminData.length) throw new Error('No admin data found.');
+      populateAdminSelect();
     }
 
     function populateAdminSelect(){
@@ -478,8 +459,15 @@
     }
     adminBackBtn.onclick = resetToAdminSelection;
 
+    // === After successful login: save session + remove login page ===
     async function onLoginSuccess(){
-      clearInterval(adminScanInterval); stopCamera();
+      clearInterval(adminScanInterval);
+      stopCamera();
+
+      // persist session
+      saveAdminSession({ name: loggedInAdmin[0], imageUrl: loggedInAdmin[1] });
+
+      // set profile
       adminProfileImgHeader.crossOrigin='anonymous';
       adminProfileImgSidebar.crossOrigin='anonymous';
       adminProfileImgHeader.src = loggedInAdmin[1];
@@ -487,11 +475,23 @@
       adminNameSidebar.textContent = loggedInAdmin[0];
       adminProfileImgHeader.classList.remove('hidden');
       adminProfileSidebar.classList.remove('hidden');
-      loginScreen.classList.add('hidden'); mainAppWrapper.classList.remove('hidden');
+
+      // remove login screen permanently
+      loginScreen.classList.add('hidden');
+      if (loginScreen.parentNode) loginScreen.parentNode.removeChild(loginScreen);
+
+      // show app
+      mainAppWrapper.classList.remove('hidden');
+
       await fetchStudents();
     }
 
-    logoutBtn.onclick = (e)=>{ e.preventDefault(); location.reload(); };
+    // === Logout clears session ===
+    logoutBtn.onclick = (e)=>{ 
+      e.preventDefault(); 
+      clearAdminSession(); 
+      location.reload(); 
+    };
 
     // === Students & Records ===
     async function fetchStudents(){
@@ -515,7 +515,7 @@
         const li=document.createElement('li');
         li.className='p-3 rounded-lg cursor-pointer transition flex justify-between items-center';
         const count=s[4];
-        if(count>0) li.classList.add('completed'); /* fixed */
+        if(count>0) li.classList.add('completed'); // fixed
         const indicator = count>0 ? `<i class="fas fa-check-circle ml-2 text-green-400"></i>` : '';
         if(count>0){
           li.style.pointerEvents='none'; li.style.opacity='.7'; li.style.color='#4ade80';
@@ -717,12 +717,6 @@
       }catch(e){ showModal('error',`Upload failed: ${e.message}`); }
     };
 
-    retakeBtn.onclick = ()=>{ photoPreview.classList.add('hidden'); uploadBtn.classList.add('hidden'); retakeBtn.classList.add('hidden'); videoWrapper.classList.remove('hidden'); faceStatus.classList.remove('hidden'); stableFrames=0; startCamera(currentFacingMode,currentCameraMode); };
-    switchCameraBtn.onclick = ()=> startCamera(currentFacingMode==='user' ? 'environment' : 'user', currentCameraMode);
-    backBtn.onclick = ()=> resetToSelection();
-    studentSearchInput.oninput = ()=> populateStudentList(studentSearchInput.value);
-    manualCaptureBtn.onclick = captureFace;
-
     // === Storage Page ===
     function populateStorageLinks() {
       const container = document.getElementById('storage-links-container');
@@ -780,15 +774,44 @@
     recordsSearchInput.oninput = () => filterRecordsTable();
     listSearchInput.oninput = () => filterStudentListTable();
 
-    // Init
+    // === Initial load with session restore ===
     window.onload = async ()=>{
       document.body.insertAdjacentHTML('afterbegin', `
         <div id="initial-loading" class="fixed inset-0 flex flex-col items-center justify-center bg-slate-900 z-50">
           <img src="di_logo.png" alt="Logo" class="w-24 h-24 rounded-full mb-4 shadow-lg">
           <p class="text-slate-300 text-lg">Loading Face Recognition Models...</p>
         </div>`);
+
       await loadModels();
-      await fetchAdmins();
+
+      // Try restore session
+      const session = loadAdminSession();
+
+      // Optional: still fetch admin list (can validate session later)
+      try { await fetchAdmins(); } catch (e) {
+        console.warn('fetchAdmins failed:', e);
+      }
+
+      if (session && session.name && session.imageUrl) {
+        // Use session and skip login
+        loggedInAdmin = [session.name, session.imageUrl];
+
+        adminProfileImgHeader.crossOrigin='anonymous';
+        adminProfileImgSidebar.crossOrigin='anonymous';
+        adminProfileImgHeader.src = session.imageUrl;
+        adminProfileImgSidebar.src = session.imageUrl;
+        adminNameSidebar.textContent = session.name;
+        adminProfileImgHeader.classList.remove('hidden');
+        adminProfileSidebar.classList.remove('hidden');
+
+        // remove login page and show app
+        loginScreen.classList.add('hidden');
+        if (loginScreen.parentNode) loginScreen.parentNode.removeChild(loginScreen);
+        mainAppWrapper.classList.remove('hidden');
+
+        await fetchStudents();
+      }
+
       document.getElementById('initial-loading').style.display='none';
     };
   </script>
