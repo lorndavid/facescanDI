@@ -48,7 +48,6 @@
     #login-screen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem; }
     .login-card{ width:100%; max-width:400px; background:rgba(30,41,59,.7); border:1px solid rgba(255,255,255,.1); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-radius:1.5rem; padding:2rem; box-shadow:0 20px 50px rgba(0,0,0,.3); }
     #admin-select{ background-color:#334155; color:#e2e8f0; border:1px solid #475569; }
-    /* note: removed invalid CSS 'img { crossorigin: anonymous; }' */
   </style>
 </head>
 
@@ -156,8 +155,8 @@
                     <div class="scanner-line"></div>
                   </div>
                   <div class="flex items-center justify-center gap-4">
-                    <button id="switch-camera-btn" class="hidden w-14 h-14 bg-slate-700/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-slate-600/50 transition" title="Switch Camera"><i class="fas fa-sync-alt fa-lg"></i></button>
-                    <button id="manual-capture-btn" class="hidden w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white hover:bg-indigo-700 transition shadow-lg" title="Capture Photo"><i class="fas fa-camera fa-2x"></i></button>
+                    <button id="switch-camera-btn" class="w-14 h-14 bg-slate-700/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-slate-600/50 transition" title="Switch Camera"><i class="fas fa-sync-alt fa-lg"></i></button>
+                    <button id="manual-capture-btn" class="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white hover:bg-indigo-700 transition shadow-lg" title="Capture Photo"><i class="fas fa-camera fa-2x"></i></button>
                   </div>
                   <canvas id="capture-canvas" class="hidden"></canvas>
                   <img id="photo-preview" class="hidden w-[90%] mx-auto aspect-square rounded-full border-4 border-green-400 object-cover shadow-lg">
@@ -233,6 +232,7 @@
   </div>
 
   <script>
+    // === BACKEND ENDPOINT ===
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPBipQMaJ9d8UQg2BdVXPw6ycZHb4hxcNfiJEW4LFZvceXo62UjkDCZEP7JwqJw_4u/exec';
 
     // === DOM refs ===
@@ -287,7 +287,8 @@
     let studentsData=[], savedRecordsData=[], allStudentsListData=[], adminData=[],
         currentStream, faceApiInterval, stableFrames=0, currentFacingMode='user',
         selectedStudent=null, currentCameraMode='auto',
-        loggedInAdmin=null, adminFaceMatcher=null, adminScanInterval=null, isScanning=false;
+        loggedInAdmin=null, adminFaceMatcher=null, adminScanInterval=null, isScanning=false,
+        isUploading=false;
 
     // === Session helpers (auto-skip login) ===
     const SESSION_KEY = 'di_admin_session_v1';
@@ -339,14 +340,9 @@
       const res = await fetch(`${SCRIPT_URL}?action=getAdmins`);
       if(!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
-      // support both backend formats:
-      if (Array.isArray(data?.data)) {
-        adminData = data.data.map(o => [o.name, o.imageUrl]);
-      } else if (Array.isArray(data)) {
-        adminData = data.filter(r => r[0] && r[1]);
-      } else {
-        throw new Error('Unexpected admin payload.');
-      }
+      if (Array.isArray(data?.data)) adminData = data.data.map(o => [o.name, o.imageUrl]);
+      else if (Array.isArray(data)) adminData = data.filter(r => r[0] && r[1]);
+      else throw new Error('Unexpected admin payload.');
       if (!adminData.length) throw new Error('No admin data found.');
       populateAdminSelect();
     }
@@ -515,7 +511,7 @@
         const li=document.createElement('li');
         li.className='p-3 rounded-lg cursor-pointer transition flex justify-between items-center';
         const count=s[4];
-        if(count>0) li.classList.add('completed'); // fixed
+        if(count>0) li.classList.add('completed');
         const indicator = count>0 ? `<i class="fas fa-check-circle ml-2 text-green-400"></i>` : '';
         if(count>0){
           li.style.pointerEvents='none'; li.style.opacity='.7'; li.style.color='#4ade80';
@@ -650,12 +646,18 @@
     // === Camera & Capture ===
     async function startCamera(facingMode='user', mode='auto'){
       currentFacingMode=facingMode; currentCameraMode=mode;
+      stableFrames = 0;
       subtitle.textContent = `Scanning for: ${selectedStudent[1]}`;
       cameraSection.classList.remove('hidden'); selectionArea.classList.add('hidden');
       switchCameraBtn.classList.remove('hidden'); backBtn.classList.remove('hidden');
+      uploadBtn.classList.add('hidden'); retakeBtn.classList.add('hidden'); photoPreview.classList.add('hidden');
+      videoWrapper.classList.remove('hidden');
+      faceStatus.classList.remove('hidden');
+      isUploading = false;
+
       stopCamera();
       try{
-        const stream=await navigator.mediaDevices.getUserMedia({ video:{ facingMode, width:640, height:480 }});
+        const stream=await navigator.mediaDevices.getUserMedia({ video:{ facingMode, width:{ideal:640}, height:{ideal:480} }, audio:false });
         currentStream=stream; video.srcObject=stream;
         video.onloadedmetadata=()=>{
           if(mode==='auto'){ manualCaptureBtn.classList.add('hidden'); detectFace(); }
@@ -703,10 +705,14 @@
       videoWrapper.classList.remove('hidden'); selectionArea.classList.remove('hidden'); subtitle.textContent="Select your ID or Name"; selectedStudent=null;
     }
 
+    manualCaptureBtn.onclick = captureFace;
+
     uploadBtn.onclick = async ()=>{
+      if(isUploading) return;
       if(!selectedStudent){ showModal('error','Could not find student data.'); return; }
       const imageData=captureCanvas.toDataURL('image/jpeg', .9).split(',')[1];
       showModal('loading','Uploading...');
+      isUploading = true;
       try{
         const res=await fetch(SCRIPT_URL,{ method:'POST', body:JSON.stringify({ id:selectedStudent[0], name:selectedStudent[1], class:selectedStudent[2], group:selectedStudent[3], imageData }), redirect:'follow' });
         if(!res.ok) throw new Error(`Server error: ${res.status}`);
@@ -715,7 +721,13 @@
           showModal('success',"Image saved successfully!",{ 'OK':{ callback:async()=>{ resetToSelection(); await fetchStudents(); } }});
         } else throw new Error(r.message||"Unknown server error.");
       }catch(e){ showModal('error',`Upload failed: ${e.message}`); }
+      finally { isUploading = false; }
     };
+
+    retakeBtn.onclick = ()=>{ photoPreview.classList.add('hidden'); uploadBtn.classList.add('hidden'); retakeBtn.classList.add('hidden'); videoWrapper.classList.remove('hidden'); faceStatus.classList.remove('hidden'); stableFrames=0; startCamera(currentFacingMode,currentCameraMode); };
+    switchCameraBtn.onclick = ()=> startCamera(currentFacingMode==='user' ? 'environment' : 'user', currentCameraMode);
+    backBtn.onclick = ()=> resetToSelection();
+    studentSearchInput.oninput = ()=> populateStudentList(studentSearchInput.value);
 
     // === Storage Page ===
     function populateStorageLinks() {
@@ -758,7 +770,7 @@
         pages.forEach(p => p.classList.add('hidden'));
         link.classList.add('active');
         pages[index].classList.remove('hidden');
-        stopCamera(); // stop camera when switching pages
+        stopCamera();
         if (pages[index] === pageRecords) displaySavedRecords();
         if (pages[index] === pageList) displayStudentList();
         if (pages[index] === pageStorage) populateStorageLinks();
@@ -768,7 +780,6 @@
     menuBtn.onclick = () => { sidebar.classList.toggle('is-open'); sidebarBackdrop.classList.toggle('hidden'); };
     sidebarBackdrop.onclick = () => closeSidebar();
 
-    // Filters
     recordsClassFilter.onchange = () => filterRecordsTable();
     listClassFilter.onchange = () => filterStudentListTable();
     recordsSearchInput.oninput = () => filterRecordsTable();
@@ -784,18 +795,11 @@
 
       await loadModels();
 
-      // Try restore session
       const session = loadAdminSession();
-
-      // Optional: still fetch admin list (can validate session later)
-      try { await fetchAdmins(); } catch (e) {
-        console.warn('fetchAdmins failed:', e);
-      }
+      try { await fetchAdmins(); } catch (e) { console.warn('fetchAdmins failed:', e); }
 
       if (session && session.name && session.imageUrl) {
-        // Use session and skip login
         loggedInAdmin = [session.name, session.imageUrl];
-
         adminProfileImgHeader.crossOrigin='anonymous';
         adminProfileImgSidebar.crossOrigin='anonymous';
         adminProfileImgHeader.src = session.imageUrl;
@@ -804,7 +808,6 @@
         adminProfileImgHeader.classList.remove('hidden');
         adminProfileSidebar.classList.remove('hidden');
 
-        // remove login page and show app
         loginScreen.classList.add('hidden');
         if (loginScreen.parentNode) loginScreen.parentNode.removeChild(loginScreen);
         mainAppWrapper.classList.remove('hidden');
