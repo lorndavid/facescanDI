@@ -58,7 +58,7 @@
   <div id="login-screen">
     <div class="login-card text-center">
       <img src="https://i.postimg.cc/FHBn0Fdf/di3-copy.png" alt="Logo" class="w-24 h-24 rounded-full mx-auto mb-4 shadow-lg">
-      <h1 id="login-title" class="text-2xl font-bold text-white khmer-title mb-2">ជ្រើសរើសឈ្មោះគណនី</h1>
+      <h1 id="login-title" class="text-2xl font-bold text-white khmer-title mb-2">ចូលគណនី</h1>
       <p id="login-subtitle" class="text-slate-400 mb-6">សូមជ្រើសរើសឈ្មោះរបស់អ្នក</p>
 
       <div id="admin-selection-area">
@@ -286,7 +286,7 @@
     };
 
     // DEFAULT to back camera everywhere
-    const DEFAULT_FACING = 'environment';
+    const DEFAULT_FACING = 'environment'; // scan page uses back camera by default
 
     let studentsData=[], savedRecordsData=[], allStudentsListData=[], adminData=[],
         currentStream, faceApiInterval, stableFrames=0, currentFacingMode=DEFAULT_FACING,
@@ -385,7 +385,8 @@
       }
       try{
         // DEFAULT: back camera (environment)
-        const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode: DEFAULT_FACING, width:640, height:480 }});
+        // ADMIN LOGIN uses FRONT camera
+        const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode: 'user', width:640, height:480 }});
         currentStream=stream; adminVideo.srcObject=stream;
         adminVideo.onloadedmetadata=()=>{
           adminScanStatus.textContent='Look at the camera. Auto-scanning...';
@@ -650,6 +651,27 @@
     }
 
     // === Camera & Capture ===
+    // Helper to write the captured image link into the Secondary sheet (AA9:AA900)
+    async function writeImageLinkToSecondarySheet({ id, imageUrl }) {
+      const payload = {
+        action: 'writeSecondaryLink',
+        spreadsheetId: '1_Kgl8UQXRsVATt_BOHYQjVWYKkRIBA12R-qnsBoSUzc',
+        sheetName: 'បញ្ជឺឈ្មោះរួម',
+        column: 'AA',
+        rangeStart: 9,
+        rangeEnd: 900,
+        matchBy: 'ID',
+        id,
+        imageUrl
+      };
+      const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const j = await res.json();
+      if (j.status !== 'success') throw new Error(j.message || 'Unknown server error.');
+      return j;
+    }
+
+    // === Camera & Capture ===
     async function startCamera(facingMode=DEFAULT_FACING, mode='auto'){
       currentFacingMode=facingMode; currentCameraMode=mode;
       stableFrames = 0;
@@ -724,6 +746,12 @@
         if(!res.ok) throw new Error(`Server error: ${res.status}`);
         const r=await res.json();
         if(r.status==='success'){
+          // Try to write the image link to the Secondary sheet (AA column)
+          try {
+            if (r.imageUrl) {
+              await writeImageLinkToSecondarySheet({ id: selectedStudent[0], imageUrl: r.imageUrl });
+            }
+          } catch (ee) { console.warn('Secondary sheet update failed:', ee); }
           showModal('success',"រូបភាពរក្សាទុកបានជោគជ័យ!",{ 'OK':{ callback:async()=>{ resetToSelection(); await fetchStudents(); } }});
         } else throw new Error(r.message||"Unknown server error.");
       }catch(e){ showModal('error',`Upload failed: ${e.message}`); }
