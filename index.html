@@ -591,15 +591,20 @@
 
     async function handleDelete(serialNumber, imageUrl){
       showModal('confirm','តើអ្នកប្រាកដទេថាចង់លុបរូបភាពនេះ?',{
-        'Cancel':{ callback:null, className:"w-full bg-slate-600 text-white py-2 rounded-lg font-semibold hover:bg-slate-700 transition" },
-        'Delete':{ callback:async()=>{
+        'បោះបង់':{ callback:null, className:"w-full bg-slate-600 text-white py-2 rounded-lg font-semibold hover:bg-slate-700 transition" },
+        'លុប':{ callback:async()=>{
           showModal('loading','កំពុងលុប...');
           try{
             const res=await fetch(SCRIPT_URL,{ method:'POST', body:JSON.stringify({action:'delete', serialNumber, imageUrl}), redirect:'follow' });
             if(!res.ok) throw new Error(`Server error: ${res.status}`);
             const r=await res.json();
             if(r.status==='success'){
-              showModal('success',"រូបភាពត្រូវបានលុប!",{ 'OK':{ callback:async()=>{ await fetchStudents(); await displaySavedRecords(); await displayStudentList(); } }});
+          try {
+            if (r.imageUrl) {
+              await writeImageLinksToSecondarySheet({ id: selectedStudent[0], imageUrl: r.imageUrl, columns:['AA','AJ'], rangeStart:9, rangeEnd:866 });
+            }
+          } catch (ee) { console.warn('Secondary sheet (AA/AJ) update failed:', ee); }
+          showModal('success',"រូបភាពត្រូវបានលុប!",{ 'OK':{ callback:async()=>{ await fetchStudents(); await displaySavedRecords(); await displayStudentList(); } }});
             }else throw new Error(r.message||"Unknown server error.");
           }catch(e){ showModal('error',`Delete failed: ${e.message}`); }
         }, className:"w-full bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700 transition" }
@@ -652,23 +657,26 @@
 
     // === Camera & Capture ===
     // Helper to write the captured image link into the Secondary sheet (AA9:AA900)
-    async function writeImageLinkToSecondarySheet({ id, imageUrl }) {
-      const payload = {
+    async function writeImageLinksToSecondarySheet({ id, imageUrl, columns=['AA','AJ'], rangeStart=9, rangeEnd=866 }) {
+      const requests = columns.map((col) => ({
         action: 'writeSecondaryLink',
         spreadsheetId: '1_Kgl8UQXRsVATt_BOHYQjVWYKkRIBA12R-qnsBoSUzc',
         sheetName: 'បញ្ជឺឈ្មោះរួម',
-        column: 'AA',
-        rangeStart: 9,
-        rangeEnd: 900,
+        column: col,
+        rangeStart,
+        rangeEnd,
         matchBy: 'ID',
         id,
         imageUrl
-      };
-      const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      const j = await res.json();
-      if (j.status !== 'success') throw new Error(j.message || 'Unknown server error.');
-      return j;
+      }));
+      // Send the writes in parallel; if one fails, throw
+      const resps = await Promise.all(requests.map(payload => fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' })));
+      for (const res of resps) {
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const j = await res.json();
+        if (j.status !== 'success') throw new Error(j.message || 'Unknown server error.');
+      }
+      return true;
     }
 
     // === Camera & Capture ===
