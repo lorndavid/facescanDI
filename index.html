@@ -711,14 +711,14 @@
       if(isUploading) return;
       if(!selectedStudent){ showModal('error','Could not find student data.'); return; }
       const imageData=captureCanvas.toDataURL('image/jpeg', .9).split(',')[1];
-      showModal('loading','Uploading...');
+      showModal('loading','កំពុងបញ្ជូនរូបភាព...');
       isUploading = true;
       try{
         const res=await fetch(SCRIPT_URL,{ method:'POST', body:JSON.stringify({ id:selectedStudent[0], name:selectedStudent[1], class:selectedStudent[2], group:selectedStudent[3], imageData }), redirect:'follow' });
         if(!res.ok) throw new Error(`Server error: ${res.status}`);
         const r=await res.json();
         if(r.status==='success'){
-          showModal('success',"Image saved successfully!",{ 'OK':{ callback:async()=>{ resetToSelection(); await fetchStudents(); } }});
+          showModal('success',"រូបភាពរក្សាទុកបានជោគជ័យ!",{ 'OK':{ callback:async()=>{ resetToSelection(); await fetchStudents(); } }});
         } else throw new Error(r.message||"Unknown server error.");
       }catch(e){ showModal('error',`Upload failed: ${e.message}`); }
       finally { isUploading = false; }
