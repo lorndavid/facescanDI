@@ -19,7 +19,8 @@
     #sidebar { transition: transform .3s ease-in-out; }
     #sidebar.is-open { transform: translateX(0); }
     .nav-link.active { background:#4f46e5; color:#fff; box-shadow:0 4px 14px rgba(79,70,229,.39) }
-    .video-container video { position:absolute; top:50%; left:50%; width:100%; height:100%; object-fit:cover; transform:translate(-50%,-50%) scaleX(-1); }
+    /* IMPORTANT: remove mirror. Keep centering transform only */
+    .video-container video { position:absolute; top:50%; left:50%; width:100%; height:100%; object-fit:cover; transform:translate(-50%,-50%); }
     .video-container { position:relative; border-radius:50%; overflow:hidden; border:5px solid transparent; transition:all .4s ease; box-shadow:0 0 15px rgba(0,0,0,.5); }
     .video-container.ready { border-color:#4ade80; box-shadow:0 0 25px rgba(74,222,128,.6); }
     .video-container.fail { border-color:#f43f5e; box-shadow:0 0 25px rgba(244,63,94,.6); }
@@ -57,7 +58,7 @@
   <div id="login-screen">
     <div class="login-card text-center">
       <img src="https://i.postimg.cc/FHBn0Fdf/di3-copy.png" alt="Logo" class="w-24 h-24 rounded-full mx-auto mb-4 shadow-lg">
-      <h1 id="login-title" class="text-2xl font-bold text-white khmer-title mb-2">ចូលគណនី</h1>
+      <h1 id="login-title" class="text-2xl font-bold text-white khmer-title mb-2">ជ្រើសរើសឈ្មោះគណនី</h1>
       <p id="login-subtitle" class="text-slate-400 mb-6">សូមជ្រើសរើសឈ្មោះរបស់អ្នក</p>
 
       <div id="admin-selection-area">
@@ -284,8 +285,11 @@
       choice:`<svg class="w-full h-full text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m4 13-4-4M3 10h12M3 15h4M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1z"/></svg>`
     };
 
+    // DEFAULT to back camera everywhere
+    const DEFAULT_FACING = 'environment';
+
     let studentsData=[], savedRecordsData=[], allStudentsListData=[], adminData=[],
-        currentStream, faceApiInterval, stableFrames=0, currentFacingMode='user',
+        currentStream, faceApiInterval, stableFrames=0, currentFacingMode=DEFAULT_FACING,
         selectedStudent=null, currentCameraMode='auto',
         loggedInAdmin=null, adminFaceMatcher=null, adminScanInterval=null, isScanning=false,
         isUploading=false;
@@ -380,7 +384,8 @@
         adminVideoWrapper.classList.add('fail'); return;
       }
       try{
-        const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:640, height:480 }});
+        // DEFAULT: back camera (environment)
+        const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode: DEFAULT_FACING, width:640, height:480 }});
         currentStream=stream; adminVideo.srcObject=stream;
         adminVideo.onloadedmetadata=()=>{
           adminScanStatus.textContent='Look at the camera. Auto-scanning...';
@@ -492,7 +497,7 @@
     // === Students & Records ===
     async function fetchStudents(){
       try{
-        const res = await fetch(`${SCRIPT_URL}?action=getStudents`);
+        const res=await fetch(`${SCRIPT_URL}?action=getStudents`);
         if(!res.ok) throw new Error(`Server error: ${res.status}`);
         const data = await res.json();
         if(data.status==='error') throw new Error(`Script Error: ${data.message}`);
@@ -525,8 +530,9 @@
 
     function showCameraModeSelection(){
       showModal('choice','សូមជ្រើសរើសប្រតិបត្តិកាមេរ៉ា',{
-        'ថតរូបស្វ័យប្រវត្តិ':{ callback:()=>startCamera('user','auto'), className:"w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition" },
-        'ថតរូបដោយខ្លួនឯង':{ callback:()=>startCamera('user','manual'), className:"w-full bg-slate-600 text-white py-3 rounded-lg font-semibold hover:bg-slate-700 transition" }
+        // DEFAULT to back camera for both options
+        'ថតរូបស្វ័យប្រវត្តិ':{ callback:()=>startCamera(DEFAULT_FACING,'auto'), className:"w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition" },
+        'ថតរូបដោយខ្លួនឯង':{ callback:()=>startCamera(DEFAULT_FACING,'manual'), className:"w-full bg-slate-600 text-white py-3 rounded-lg font-semibold hover:bg-slate-700 transition" }
       });
     }
 
@@ -644,10 +650,10 @@
     }
 
     // === Camera & Capture ===
-    async function startCamera(facingMode='user', mode='auto'){
+    async function startCamera(facingMode=DEFAULT_FACING, mode='auto'){
       currentFacingMode=facingMode; currentCameraMode=mode;
       stableFrames = 0;
-      subtitle.textContent = `Scanning for: ${selectedStudent[1]}`;
+      subtitle.textContent = `Scanning for: ${selectedStudent ? selectedStudent[1] : ''}`;
       cameraSection.classList.remove('hidden'); selectionArea.classList.add('hidden');
       switchCameraBtn.classList.remove('hidden'); backBtn.classList.remove('hidden');
       uploadBtn.classList.add('hidden'); retakeBtn.classList.add('hidden'); photoPreview.classList.add('hidden');
@@ -684,7 +690,7 @@
       clearInterval(faceApiInterval);
       const ctx=captureCanvas.getContext('2d'); const size=512;
       captureCanvas.width=size; captureCanvas.height=size;
-      if(currentFacingMode==='user'){ ctx.translate(size,0); ctx.scale(-1,1); }
+      // IMPORTANT: no mirroring for user/front camera. Draw as-is.
       const vRatio=video.videoWidth/video.videoHeight;
       let sx=0, sy=0, sw=video.videoWidth, sh=video.videoHeight;
       if(vRatio>1){ sw=sh; sx=(video.videoWidth-sw)/2; } else { sh=sw; sy=(video.videoHeight-sh)/2; }
@@ -711,21 +717,22 @@
       if(isUploading) return;
       if(!selectedStudent){ showModal('error','Could not find student data.'); return; }
       const imageData=captureCanvas.toDataURL('image/jpeg', .9).split(',')[1];
-      showModal('loading','Uploading...');
+      showModal('loading','កំពុងបញ្ជូនរូបភាព...');
       isUploading = true;
       try{
         const res=await fetch(SCRIPT_URL,{ method:'POST', body:JSON.stringify({ id:selectedStudent[0], name:selectedStudent[1], class:selectedStudent[2], group:selectedStudent[3], imageData }), redirect:'follow' });
         if(!res.ok) throw new Error(`Server error: ${res.status}`);
         const r=await res.json();
         if(r.status==='success'){
-          showModal('success',"Image saved successfully!",{ 'OK':{ callback:async()=>{ resetToSelection(); await fetchStudents(); } }});
+          showModal('success',"រូបភាពរក្សាទុកបានជោគជ័យ!",{ 'OK':{ callback:async()=>{ resetToSelection(); await fetchStudents(); } }});
         } else throw new Error(r.message||"Unknown server error.");
       }catch(e){ showModal('error',`Upload failed: ${e.message}`); }
       finally { isUploading = false; }
     };
 
     retakeBtn.onclick = ()=>{ photoPreview.classList.add('hidden'); uploadBtn.classList.add('hidden'); retakeBtn.classList.add('hidden'); videoWrapper.classList.remove('hidden'); faceStatus.classList.remove('hidden'); stableFrames=0; startCamera(currentFacingMode,currentCameraMode); };
-    switchCameraBtn.onclick = ()=> startCamera(currentFacingMode==='user' ? 'environment' : 'user', currentCameraMode);
+    // Toggle between back and front. Both will NOT mirror.
+    switchCameraBtn.onclick = ()=> startCamera(currentFacingMode===DEFAULT_FACING ? 'user' : DEFAULT_FACING, currentCameraMode);
     backBtn.onclick = ()=> resetToSelection();
     studentSearchInput.oninput = ()=> populateStudentList(studentSearchInput.value);
 
